@@ -1,3 +1,4 @@
+import 'package:ctrl/theme/app_theme.dart';
 import 'package:ctrl/views/home_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -10,10 +11,11 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Control Brabots',
-      home: HomeScreen(),
+      theme: AppTheme.darkTheme,
+      home: const HomeScreen(),
     );
   }
 }

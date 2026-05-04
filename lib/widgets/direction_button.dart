@@ -11,6 +11,8 @@ class DirectionButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
         shape: const CircleBorder(),
         padding: const EdgeInsets.all(20),
       ),
