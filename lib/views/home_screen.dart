@@ -12,8 +12,8 @@ class HomeScreen extends StatelessWidget {
       create: (_) => BluetoothViewModel()..init(),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Brabots Control'),
-          backgroundColor: Colors.green,
+          title: const Text('🎮 BRABOTS ctrl 🕹️'),
+          backgroundColor: Colors.black,
           foregroundColor: Colors.white,
           centerTitle: true,
           actions: [
@@ -41,6 +41,9 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Image.asset('assets/images/logo.png', height: 200),
+                  const SizedBox(height: 20),
+
                   // Status do Bluetooth
                   Text(
                     vm.isBluetoothOn
