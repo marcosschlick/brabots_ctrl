@@ -1,6 +1,8 @@
 import 'package:ctrl/theme/app_theme.dart';
 import 'package:ctrl/views/home_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'viewmodels/bluetooth_viewmodel.dart';
 
 void main() {
   runApp(const MainApp());
@@ -11,11 +13,14 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Control Brabots',
-      theme: AppTheme.darkTheme,
-      home: const HomeScreen(),
+    return ChangeNotifierProvider(
+      create: (_) => BluetoothViewModel()..init(),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'BRABOTS ctrl',
+        theme: AppTheme.darkTheme,
+        home: const HomeScreen(),
+      ),
     );
   }
 }
