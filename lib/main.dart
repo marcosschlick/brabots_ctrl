@@ -1,5 +1,5 @@
 import 'package:ctrl/theme/app_theme.dart';
-import 'package:ctrl/views/home_screen.dart';
+import 'package:ctrl/views/connection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'viewmodels/bluetooth_viewmodel.dart';
@@ -19,7 +19,7 @@ class MainApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: 'BRABOTS ctrl',
         theme: AppTheme.darkTheme,
-        home: const HomeScreen(),
+        home: const ConnectionScreen(),
       ),
     );
   }
