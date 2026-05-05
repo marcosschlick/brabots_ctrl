@@ -23,7 +23,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('🎮 Controle do Robô'),
+        title: const Text('🎮 BRABOTS ctrl 🕹️'),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         centerTitle: true,
