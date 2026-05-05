@@ -73,6 +73,7 @@ class _ControlScreenState extends State<ControlScreen> {
                   DirectionButton(
                     icon: Icons.arrow_upward,
                     onPressed: () => viewModel.sendCommand('F'),
+                    onReleased: () => viewModel.sendCommand('S'),
                   ),
                   const SizedBox(height: 10),
                   Row(
@@ -81,11 +82,13 @@ class _ControlScreenState extends State<ControlScreen> {
                       DirectionButton(
                         icon: Icons.arrow_back,
                         onPressed: () => viewModel.sendCommand('L'),
+                        onReleased: () => viewModel.sendCommand('S'),
                       ),
                       const SizedBox(width: 20),
                       DirectionButton(
                         icon: Icons.arrow_forward,
                         onPressed: () => viewModel.sendCommand('R'),
+                        onReleased: () => viewModel.sendCommand('S'),
                       ),
                     ],
                   ),
@@ -93,6 +96,7 @@ class _ControlScreenState extends State<ControlScreen> {
                   DirectionButton(
                     icon: Icons.arrow_downward,
                     onPressed: () => viewModel.sendCommand('B'),
+                    onReleased: () => viewModel.sendCommand('S'),
                   ),
                 ],
               ),
