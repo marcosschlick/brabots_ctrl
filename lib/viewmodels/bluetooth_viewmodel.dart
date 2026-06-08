@@ -11,14 +11,12 @@ class BluetoothViewModel extends ChangeNotifier {
   List<BluetoothDevice> _devices = [];
   String _errorMessage = '';
 
-  // Getters
   bool get isBluetoothOn => _isBluetoothOn;
   bool get isConnected => _isConnected;
   String? get connectedDeviceName => _connectedDeviceName;
   List<BluetoothDevice> get devices => _devices;
   String get errorMessage => _errorMessage;
 
-  // Inicialização
   Future<void> init() async {
     _isBluetoothOn = await _service.enableBluetooth();
     if (_isBluetoothOn) {
@@ -29,14 +27,12 @@ class BluetoothViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Carregar dispositivos pareados
   Future<void> loadDevices() async {
     if (!_isBluetoothOn) return;
     _devices = await _service.loadBondedDevices();
     notifyListeners();
   }
 
-  // Conectar a um dispositivo
   Future<void> connectToDevice(BluetoothDevice device) async {
     if (_isConnected) {
       _errorMessage =
@@ -56,15 +52,17 @@ class BluetoothViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Desconectar
   Future<void> disconnect() async {
-    await _service.disconnect();
+    try {
+      await _service.disconnect();
+    } catch (e) {
+      print('Erro ao desconectar: $e');
+    }
     _isConnected = false;
     _connectedDeviceName = null;
     notifyListeners();
   }
 
-  // Enviar comando
   Future<bool> sendCommand(String command) async {
     if (!_isConnected) {
       _errorMessage = 'Sem conexão ativa';
