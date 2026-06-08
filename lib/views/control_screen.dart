@@ -17,13 +17,25 @@ class _ControlScreenState extends State<ControlScreen> {
   static const double _gapV = 5.0;
   static const double _gapH = _gapV * 10;
 
-  @override
-  void initState() {
-    super.initState();
+  static void _lockLandscape() {
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _lockLandscape();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _lockLandscape());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _lockLandscape();
   }
 
   @override
@@ -146,7 +158,7 @@ class _ControlScreenState extends State<ControlScreen> {
   Widget _logo(BluetoothViewModel vm) => Column(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Image.asset('assets/images/logo.png', height: 200),
+      Image.asset('assets/images/logo.png', height: 250),
       const SizedBox(height: 10),
       Text(
         'Conectado a:\n${vm.connectedDeviceName}',

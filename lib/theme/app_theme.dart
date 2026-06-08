@@ -3,8 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   static const Color backgroundYellow = Color.fromARGB(255, 253, 251, 129);
-  static const Color deviceCardGreen = Color.fromARGB(255, 53, 190, 158);
-  static const Color deviceTileGreen = Color.fromARGB(255, 53, 190, 158);
+  static const Color deviceCardGreen = Color.fromARGB(255, 55, 190, 165);
   static const Color appBarBackground = Colors.black;
   static const Color controlButton = Colors.deepPurple;
 
@@ -31,8 +30,6 @@ class AppTheme {
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         elevation: 8,
-        backgroundColor: controlButton,
-        foregroundColor: Colors.white,
         shadowColor: Colors.deepPurple.withOpacity(0.6),
         shape: const CircleBorder(),
         padding: const EdgeInsets.all(20),

@@ -36,8 +36,8 @@ class _DirectionButtonState extends State<DirectionButton> {
         child: ElevatedButton(
           onPressed: null,
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurple,
-            foregroundColor: Colors.white,
+            disabledBackgroundColor: Color.fromARGB(255, 34, 121, 105),
+            disabledForegroundColor: Colors.white,
             shape: const CircleBorder(),
             padding: const EdgeInsets.all(20),
           ),
