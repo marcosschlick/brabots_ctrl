@@ -17,6 +17,10 @@ class BluetoothViewModel extends ChangeNotifier {
   List<BluetoothDevice> get devices => _devices;
   String get errorMessage => _errorMessage;
 
+  String? _selectedDeviceAddress;
+
+  String? get selectedDeviceAddress => _selectedDeviceAddress;
+
   Future<void> init() async {
     _isBluetoothOn = await _service.enableBluetooth();
     if (_isBluetoothOn) {
@@ -34,6 +38,8 @@ class BluetoothViewModel extends ChangeNotifier {
   }
 
   Future<void> connectToDevice(BluetoothDevice device) async {
+    _selectedDeviceAddress = device.address;
+    notifyListeners();
     if (_isConnected) {
       _errorMessage =
           'Já conectado a $_connectedDeviceName. Desconecte primeiro.';
@@ -49,6 +55,7 @@ class BluetoothViewModel extends ChangeNotifier {
     } else {
       _errorMessage = 'Falha ao conectar com ${device.name}';
     }
+
     notifyListeners();
   }
 

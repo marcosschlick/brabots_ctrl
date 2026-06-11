@@ -14,8 +14,8 @@ class ControlScreen extends StatefulWidget {
 
 class _ControlScreenState extends State<ControlScreen> {
   static const double _buttonSize = 70.0;
-  static const double _gapV = 5.0;
-  static const double _gapH = _gapV * 10;
+  static const double _gapV = 1.0;
+  static const double _gapH = _gapV * 50.0;
 
   static void _lockLandscape() {
     SystemChrome.setPreferredOrientations([
@@ -101,37 +101,16 @@ class _ControlScreenState extends State<ControlScreen> {
     );
   }
 
-  Widget _faceBtn(
-    String label,
-    Color color,
-    String cmd,
-    BluetoothViewModel vm,
-  ) {
-    return _PressableButton(
+  Widget _faceBtn(String label, String cmd, BluetoothViewModel vm) {
+    return DirectionButton(
       onPressed: () => vm.sendCommand(cmd),
       onReleased: () => vm.sendCommand('S'),
-      child: Container(
-        width: _buttonSize,
-        height: _buttonSize,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.5),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
         ),
       ),
     );
@@ -148,10 +127,10 @@ class _ControlScreenState extends State<ControlScreen> {
 
   Widget _rightCard(BluetoothViewModel vm) => _card(
     _cross(
-      top: _faceBtn('Y', const Color(0xFFE6B800), 'F', vm),
-      left: _faceBtn('X', const Color(0xFF1565C0), 'L', vm),
-      right: _faceBtn('B', const Color(0xFFB71C1C), 'R', vm),
-      bottom: _faceBtn('A', const Color(0xFF2E7D32), 'B', vm),
+      top: _faceBtn('X', 'X', vm),
+      left: _faceBtn('Y', 'Y', vm),
+      right: _faceBtn('A', 'A', vm),
+      bottom: _faceBtn('B', 'C', vm),
     ),
   );
 
@@ -204,11 +183,9 @@ class _PressableButton extends StatefulWidget {
   final VoidCallback? onPressed;
   final VoidCallback? onReleased;
 
-  const _PressableButton({
-    required this.child,
-    this.onPressed,
-    this.onReleased,
-  });
+  const _PressableButton({required this.child})
+    : onReleased = null,
+      onPressed = null;
 
   @override
   State<_PressableButton> createState() => _PressableButtonState();

@@ -7,6 +7,61 @@ import '../viewmodels/bluetooth_viewmodel.dart';
 class ConnectionScreen extends StatelessWidget {
   const ConnectionScreen({super.key});
 
+  Widget _buildStatusCard(BluetoothViewModel viewModel) {
+    final isBluetoothOn = viewModel.isBluetoothOn;
+    final hasError = viewModel.errorMessage.isNotEmpty;
+
+    Color backgroundColor;
+    IconData leadingIcon;
+    String statusText;
+
+    if (hasError) {
+      backgroundColor = Colors.red.shade700;
+      leadingIcon = Icons.error_outline;
+      statusText = viewModel.errorMessage;
+    } else if (isBluetoothOn) {
+      backgroundColor = AppTheme.deviceCardGreen;
+      leadingIcon = Icons.bluetooth_connected;
+      statusText = 'Bluetooth ligado';
+    } else {
+      backgroundColor = Colors.grey.shade800;
+      leadingIcon = Icons.bluetooth_disabled;
+      statusText = 'Bluetooth desligado';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(leadingIcon, color: Colors.white, size: 22),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              statusText,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<BluetoothViewModel>();
@@ -44,31 +99,7 @@ class ConnectionScreen extends StatelessWidget {
                   height: isLandscape ? 200 : 250,
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  viewModel.isBluetoothOn
-                      ? 'Bluetooth: ligado ✔'
-                      : 'Bluetooth: desligado ✘',
-                  style: TextStyle(
-                    color: viewModel.isBluetoothOn
-                        ? const Color(0xFF1565C0)
-                        : Colors.red.shade700,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                ),
-                if (viewModel.errorMessage.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    viewModel.errorMessage,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.red.shade700,
-                      fontWeight: FontWeight.w600,
-                      decoration: TextDecoration.underline,
-                      decorationColor: Colors.red.shade700,
-                    ),
-                  ),
-                ],
+                _buildStatusCard(viewModel),
               ],
             );
 
@@ -85,7 +116,7 @@ class ConnectionScreen extends StatelessWidget {
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      fontSize: 15,
+                      fontSize: 20,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -109,37 +140,70 @@ class ConnectionScreen extends StatelessWidget {
                           ),
                           itemBuilder: (_, i) {
                             final device = viewModel.devices[i];
-                            return ListTile(
-                              leading: const Icon(
-                                Icons.bluetooth,
-                                color: Colors.white,
+                            final isSelected =
+                                device.address ==
+                                viewModel.selectedDeviceAddress;
+
+                            return Container(
+                              margin: const EdgeInsets.symmetric(
+                                vertical: 4,
+                                horizontal: 8,
                               ),
-                              title: Text(
-                                device.name ?? 'Sem nome',
-                                style: const TextStyle(
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? Color.fromARGB(255, 48, 38, 129)
+                                    : null,
+                                borderRadius: BorderRadius.circular(16),
+                                border: isSelected
+                                    ? Border.all(
+                                        color: const Color.fromARGB(
+                                          255,
+                                          255,
+                                          255,
+                                          255,
+                                        ),
+                                        width: 3,
+                                      )
+                                    : null,
+                              ),
+                              child: ListTile(
+                                leading: const Icon(
+                                  Icons.bluetooth,
                                   color: Colors.white,
-                                  fontWeight: FontWeight.bold,
                                 ),
+                                title: Text(
+                                  device.name ?? 'Sem nome',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  device.address,
+                                  style: const TextStyle(color: Colors.white70),
+                                ),
+                                tileColor: isSelected
+                                    ? Colors.yellow.withOpacity(0.2)
+                                    : null,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                onTap: viewModel.isConnected
+                                    ? null
+                                    : () async {
+                                        await viewModel.connectToDevice(device);
+                                        if (viewModel.isConnected &&
+                                            context.mounted) {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const ControlScreen(),
+                                            ),
+                                          );
+                                        }
+                                      },
                               ),
-                              subtitle: Text(
-                                device.address,
-                                style: const TextStyle(color: Colors.white70),
-                              ),
-                              onTap: viewModel.isConnected
-                                  ? null
-                                  : () async {
-                                      await viewModel.connectToDevice(device);
-                                      if (viewModel.isConnected &&
-                                          context.mounted) {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                const ControlScreen(),
-                                          ),
-                                        );
-                                      }
-                                    },
                             );
                           },
                         ),

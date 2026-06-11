@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  static const Color backgroundYellow = Color.fromARGB(255, 253, 251, 129);
-  static const Color deviceCardGreen = Color.fromARGB(255, 55, 190, 165);
+  static const Color backgroundYellow = Color.fromARGB(255, 252, 217, 80);
+  static const Color deviceCardGreen = Color.fromARGB(255, 0, 148, 64);
   static const Color appBarBackground = Colors.black;
   static const Color controlButton = Colors.deepPurple;
 
