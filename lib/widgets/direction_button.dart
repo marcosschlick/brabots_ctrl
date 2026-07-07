@@ -21,6 +21,24 @@ class DirectionButton extends StatefulWidget {
 
 class _DirectionButtonState extends State<DirectionButton> {
   bool _isPressed = false;
+  int? _activePointer;
+
+  void _press(int pointer) {
+    if (_activePointer != null) return;
+
+    _activePointer = pointer;
+    widget.onPressed?.call();
+    HapticFeedback.lightImpact();
+    setState(() => _isPressed = true);
+  }
+
+  void _release(int pointer) {
+    if (_activePointer != pointer) return;
+
+    _activePointer = null;
+    widget.onReleased?.call();
+    setState(() => _isPressed = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,19 +52,14 @@ class _DirectionButtonState extends State<DirectionButton> {
     }
 
     return Listener(
-      onPointerDown: (_) {
-        widget.onPressed?.call();
-        HapticFeedback.lightImpact();
-        setState(() => _isPressed = true);
-      },
-      onPointerUp: (_) {
-        widget.onReleased?.call();
-        setState(() => _isPressed = false);
-      },
-      child: AnimatedContainer(
+      onPointerDown: (event) => _press(event.pointer),
+      onPointerUp: (event) => _release(event.pointer),
+      onPointerCancel: (event) => _release(event.pointer),
+      child: AnimatedScale(
+        scale: _isPressed ? 1.05 : 1.0,
         duration: const Duration(milliseconds: 50),
-        transform: Matrix4.identity()..scale(_isPressed ? 1.05 : 1.0),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 50),
           width: 70,
           height: 70,
           decoration: BoxDecoration(
@@ -56,7 +69,12 @@ class _DirectionButtonState extends State<DirectionButton> {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: const Color.fromARGB(255, 48, 38, 129).withOpacity(0.5),
+                color: const Color.fromARGB(
+                  255,
+                  48,
+                  38,
+                  129,
+                ).withValues(alpha: 0.5),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),

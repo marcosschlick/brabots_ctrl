@@ -30,7 +30,7 @@ class AppTheme {
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         elevation: 8,
-        shadowColor: Colors.deepPurple.withOpacity(0.6),
+        shadowColor: Colors.deepPurple.withValues(alpha: 0.6),
         shape: const CircleBorder(),
         padding: const EdgeInsets.all(20),
       ),
@@ -44,5 +44,5 @@ class AppTheme {
     borderRadius: BorderRadius.circular(24),
   );
 
-  static Color get deviceDividerColor => Colors.white.withOpacity(0.25);
+  static Color get deviceDividerColor => Colors.white.withValues(alpha: 0.25);
 }

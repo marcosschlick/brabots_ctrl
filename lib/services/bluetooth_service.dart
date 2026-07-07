@@ -1,101 +1,174 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:typed_data';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-class BluetoothService {
-  BluetoothConnection? _connection;
-  final List<BluetoothDevice> _bondedDevices = [];
+abstract class BluetoothTransport {
+  bool get isConnected;
+  List<BluetoothDevice> get bondedDevices;
+  Stream<void> get onConnectionLost;
 
-  // Getters para acesso externo (quando necessário)
+  Future<bool> enableBluetooth();
+  Future<List<BluetoothDevice>> loadBondedDevices();
+  Future<bool> connectToDevice(BluetoothDevice device);
+  Future<bool> sendCommand(String command);
+  Future<void> disconnect();
+  void dispose();
+}
+
+class BluetoothService implements BluetoothTransport {
+  BluetoothConnection? _connection;
+  StreamSubscription<Uint8List>? _inputSubscription;
+  final StreamController<void> _connectionLostController =
+      StreamController<void>.broadcast();
+  final List<BluetoothDevice> _bondedDevices = [];
+  bool _disconnecting = false;
+  bool _disposed = false;
+
+  @override
   bool get isConnected => _connection?.isConnected ?? false;
+
+  @override
   List<BluetoothDevice> get bondedDevices => _bondedDevices;
 
-  // Solicitar permissões e ativar Bluetooth
+  @override
+  Stream<void> get onConnectionLost => _connectionLostController.stream;
+
+  @override
   Future<bool> enableBluetooth() async {
-    // Permissões
     if (!await _requestPermissions()) return false;
 
-    final state = await FlutterBluetoothSerial.instance.state;
-    if (state == BluetoothState.STATE_OFF) {
-      try {
+    try {
+      final state = await FlutterBluetoothSerial.instance.state;
+      if (state == BluetoothState.STATE_OFF) {
         await FlutterBluetoothSerial.instance.requestEnable();
-      } catch (e) {
-        return false;
       }
+      return await FlutterBluetoothSerial.instance.state ==
+          BluetoothState.STATE_ON;
+    } catch (e, stackTrace) {
+      developer.log(
+        'Erro ao ativar Bluetooth',
+        name: 'BluetoothService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return false;
     }
-    return await FlutterBluetoothSerial.instance.state ==
-        BluetoothState.STATE_ON;
   }
 
   Future<bool> _requestPermissions() async {
-    final scanStatus = await Permission.bluetoothScan.request();
-    final connectStatus = await Permission.bluetoothConnect.request();
-    return scanStatus.isGranted && connectStatus.isGranted;
+    final statuses = await [
+      Permission.bluetoothScan,
+      Permission.bluetoothConnect,
+      Permission.locationWhenInUse,
+    ].request();
+
+    return statuses[Permission.bluetoothScan]?.isGranted == true &&
+        statuses[Permission.bluetoothConnect]?.isGranted == true &&
+        statuses[Permission.locationWhenInUse]?.isGranted == true;
   }
 
-  // Carregar dispositivos pareados
+  @override
   Future<List<BluetoothDevice>> loadBondedDevices() async {
     _bondedDevices.clear();
     try {
       _bondedDevices.addAll(
         await FlutterBluetoothSerial.instance.getBondedDevices(),
       );
-    } catch (e) {
-      print('Erro ao carregar dispositivos: $e');
+    } catch (e, stackTrace) {
+      developer.log(
+        'Erro ao carregar dispositivos',
+        name: 'BluetoothService',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
     return _bondedDevices;
   }
 
-  // Conectar a um dispositivo
+  @override
   Future<bool> connectToDevice(BluetoothDevice device) async {
-    if (_connection?.isConnected == true) await disconnect();
+    if (_connection != null) await disconnect();
 
     try {
       final connection = await BluetoothConnection.toAddress(device.address);
       _connection = connection;
 
-      // Listener opcional para dados recebidos (apenas debug)
-      connection.input
-          ?.listen((Uint8List data) {
-            print('Recebido: ${String.fromCharCodes(data)}');
-          })
-          .onDone(() {
-            disconnect(); // limpa estado quando perde conexão
-          });
+      _inputSubscription = connection.input?.listen(
+        (_) {},
+        onError: (_, _) => _handleConnectionClosed(),
+        onDone: _handleConnectionClosed,
+        cancelOnError: true,
+      );
 
       return true;
-    } catch (e) {
-      print('Falha na conexão: $e');
+    } catch (e, stackTrace) {
+      _connection = null;
+      developer.log(
+        'Falha na conexão',
+        name: 'BluetoothService',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
 
-  // Enviar comando (string) + newline
+  @override
   Future<bool> sendCommand(String command) async {
     if (!isConnected) return false;
+    if (command.length != 1 || command.codeUnitAt(0) > 0x7f) return false;
+
     try {
-      // Converte a string para Uint8List
-      final List<int> commandBytes = command.codeUnits;
-      final Uint8List commandUint8 = Uint8List.fromList(commandBytes);
-      _connection!.output.add(commandUint8);
-
-      // Adiciona newline (\n) também como Uint8List
-      final Uint8List newline = Uint8List.fromList([10]);
-      _connection!.output.add(newline);
-
-      // Aguarda o envio de todos os dados
+      final commandBytes = Uint8List.fromList([command.codeUnitAt(0)]);
+      _connection!.output.add(commandBytes);
       await _connection!.output.allSent;
       return true;
-    } catch (e) {
-      print('Erro ao enviar: $e');
+    } catch (e, stackTrace) {
+      developer.log(
+        'Erro ao enviar comando',
+        name: 'BluetoothService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      _handleConnectionClosed();
       return false;
     }
   }
 
-  // Desconectar manualmente
-  Future<void> disconnect() async {
-    await _connection?.close();
+  void _handleConnectionClosed() {
+    if (_disconnecting || _connection == null) return;
+
     _connection = null;
+    _inputSubscription = null;
+
+    if (!_disposed && !_connectionLostController.isClosed) {
+      _connectionLostController.add(null);
+    }
+  }
+
+  @override
+  Future<void> disconnect() async {
+    _disconnecting = true;
+    final connection = _connection;
+    final inputSubscription = _inputSubscription;
+
+    _connection = null;
+    _inputSubscription = null;
+
+    try {
+      await inputSubscription?.cancel();
+      await connection?.close();
+    } finally {
+      _disconnecting = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    unawaited(disconnect());
+    unawaited(_connectionLostController.close());
   }
 }

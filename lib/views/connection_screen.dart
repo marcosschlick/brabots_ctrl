@@ -9,13 +9,18 @@ class ConnectionScreen extends StatelessWidget {
 
   Widget _buildStatusCard(BluetoothViewModel viewModel) {
     final isBluetoothOn = viewModel.isBluetoothOn;
+    final isConnecting = viewModel.isConnecting;
     final hasError = viewModel.errorMessage.isNotEmpty;
 
     Color backgroundColor;
     IconData leadingIcon;
     String statusText;
 
-    if (hasError) {
+    if (isConnecting) {
+      backgroundColor = const Color.fromARGB(255, 48, 38, 129);
+      leadingIcon = Icons.bluetooth_searching;
+      statusText = 'Conectando...';
+    } else if (hasError) {
       backgroundColor = Colors.red.shade700;
       leadingIcon = Icons.error_outline;
       statusText = viewModel.errorMessage;
@@ -36,7 +41,7 @@ class ConnectionScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -66,15 +71,6 @@ class ConnectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final viewModel = context.watch<BluetoothViewModel>();
 
-    if (viewModel.isConnected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const ControlScreen()),
-        );
-      });
-    }
-
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackground,
       appBar: AppBar(
@@ -82,7 +78,7 @@ class ConnectionScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => context.read<BluetoothViewModel>().loadDevices(),
+            onPressed: () => context.read<BluetoothViewModel>().refresh(),
           ),
         ],
       ),
@@ -132,7 +128,7 @@ class ConnectionScreen extends StatelessWidget {
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: viewModel.devices.length,
-                          separatorBuilder: (_, __) => Divider(
+                          separatorBuilder: (_, _) => Divider(
                             color: AppTheme.deviceDividerColor,
                             height: 1,
                             indent: 16,
@@ -183,17 +179,19 @@ class ConnectionScreen extends StatelessWidget {
                                   style: const TextStyle(color: Colors.white70),
                                 ),
                                 tileColor: isSelected
-                                    ? Colors.yellow.withOpacity(0.2)
+                                    ? Colors.yellow.withValues(alpha: 0.2)
                                     : null,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
-                                onTap: viewModel.isConnected
+                                onTap:
+                                    viewModel.isConnected ||
+                                        viewModel.isConnecting
                                     ? null
                                     : () async {
-                                        await viewModel.connectToDevice(device);
-                                        if (viewModel.isConnected &&
-                                            context.mounted) {
+                                        final connected = await viewModel
+                                            .connectToDevice(device);
+                                        if (connected && context.mounted) {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(

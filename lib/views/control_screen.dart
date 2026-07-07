@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:ctrl/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -41,7 +43,10 @@ class _ControlScreenState extends State<ControlScreen> {
   @override
   void dispose() {
     SystemChrome.setPreferredOrientations(DeviceOrientation.values);
-    context.read<BluetoothViewModel>().disconnect();
+    final vm = context.read<BluetoothViewModel>();
+    if (vm.isConnected) {
+      unawaited(vm.disconnect());
+    }
     super.dispose();
   }
 
@@ -79,7 +84,7 @@ class _ControlScreenState extends State<ControlScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.deviceCardGreen.withOpacity(0.35),
+            color: AppTheme.deviceCardGreen.withValues(alpha: 0.35),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -155,6 +160,14 @@ class _ControlScreenState extends State<ControlScreen> {
   Widget build(BuildContext context) {
     final vm = context.watch<BluetoothViewModel>();
 
+    if (!vm.isConnected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+      });
+    }
+
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackground,
       appBar: AppBar(title: const Text('🎮 BRABOTS ctrl 🕹️')),
@@ -173,42 +186,6 @@ class _ControlScreenState extends State<ControlScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _PressableButton extends StatefulWidget {
-  final Widget child;
-  final VoidCallback? onPressed;
-  final VoidCallback? onReleased;
-
-  const _PressableButton({required this.child})
-    : onReleased = null,
-      onPressed = null;
-
-  @override
-  State<_PressableButton> createState() => _PressableButtonState();
-}
-
-class _PressableButtonState extends State<_PressableButton> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Listener(
-      onPointerDown: (_) {
-        widget.onPressed?.call();
-        setState(() => _pressed = true);
-      },
-      onPointerUp: (_) {
-        widget.onReleased?.call();
-        setState(() => _pressed = false);
-      },
-      child: AnimatedScale(
-        scale: _pressed ? 0.92 : 1.0,
-        duration: const Duration(milliseconds: 60),
-        child: widget.child,
       ),
     );
   }

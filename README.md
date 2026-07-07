@@ -1,63 +1,96 @@
 # BRABOTS ctrl
 
-Flutter‑based Bluetooth controller for Arduino‑powered robots, developed for the **BRABOTS** robotics competition.
+Android Bluetooth controller for Arduino-powered robot cars, built with Flutter for the BRABOTS robotics competition.
 
-## Overview
-
-This app connects to an HC‑05 (or compatible) Bluetooth module on an Arduino car. It sends single‑character commands to control movement, stop, and additional actions.
+The app connects to a paired HC-05/HC-06 compatible Bluetooth module over classic Bluetooth SPP and sends one-character movement commands to the Arduino.
 
 ## Features
 
-- Scan and connect to paired Bluetooth devices
-- Visual connection status and error reporting
-- Directional pad (Forward, Back, Left, Right)
-- Four face buttons (A, B, X, Y) mapped to custom commands
-- Haptic feedback on button press
-- Automatic landscape orientation lock on the control screen
-- Stop command (`S`) sent automatically when a button is released
+- Paired Bluetooth device listing and connection flow
+- Directional controls for forward, backward, left, and right
+- Four custom action buttons: A, B, X, and Y
+- Automatic stop command when a control is released or touch is canceled
+- Connection status, recoverable errors, and retry support
+- Landscape control screen for gamepad-style use
+- Unit and widget tests for Bluetooth state handling and button gestures
 
-## Command Mapping
+## Requirements
 
-| Button | Command |
-|--------|---------|
-| ↑ (Up) | `F` (Forward) |
-| ↓ (Down) | `B` (Backward) |
-| ← (Left) | `L` (Left turn) |
-| → (Right) | `R` (Right turn) |
-| A | `A` |
-| B | `C` |
-| X | `X` |
-| Y | `Y` |
+- Android phone or tablet with Bluetooth Classic support
+- HC-05, HC-06, or compatible serial Bluetooth module
+- Arduino firmware that reads single-character serial commands
+- The Bluetooth module must be paired in Android settings before opening the app
 
-> All buttons send `S` (Stop) when released.
+> Real robot control currently targets Android. The `flutter_bluetooth_serial` plugin used by this project does not provide HC-05/SPP support for iOS or web.
+
+## Command Protocol
+
+Commands are sent as a single ASCII character with no trailing newline.
+
+| Control | Command | Meaning |
+| --- | --- | --- |
+| Up | `F` | Forward |
+| Down | `B` | Backward |
+| Left | `L` | Turn left |
+| Right | `R` | Turn right |
+| A | `A` | Custom action |
+| B | `C` | Custom action |
+| X | `X` | Custom action |
+| Y | `Y` | Custom action |
+| Release | `S` | Stop |
+
+Example Arduino-side logic:
+
+```cpp
+if (Serial.available()) {
+  char command = Serial.read();
+  // Handle F, B, L, R, S, A, C, X, Y
+}
+```
+
+## Android Permissions
+
+The app requests Bluetooth scan/connect and location permissions. Location is still required by the current Bluetooth serial plugin and Android Bluetooth APIs to access paired devices on some Android versions.
+
+If no devices appear:
+
+- Pair the HC-05/HC-06 in Android Bluetooth settings first
+- Grant Bluetooth and location permissions
+- Tap refresh in the app
+- Restart Bluetooth if the module was recently powered off
 
 ## Getting Started
 
-1. Clone the repository  
-   `git clone https://github.com/marcosschlick/brabots_ctrl.git`
+```bash
+flutter pub get
+flutter run
+```
 
-2. Navigate to the project folder  
-   `cd brabots_ctrl`
+Build a debug APK:
 
-3. Get dependencies  
-   `flutter pub get`
+```bash
+flutter build apk --debug
+```
 
-4. Run the app  
-   `flutter run`
+Run checks:
 
-> On Android, ensure location and Bluetooth permissions are granted. The app requests them automatically.
+```bash
+flutter analyze
+flutter test
+```
 
 ## Project Structure
 
-- `lib/views/` – Connection and control screens
-- `lib/viewmodels/` – Bluetooth state management (Provider)
-- `lib/services/` – Bluetooth communication logic
-- `lib/widgets/` – Custom press‑sensitive buttons
-- `lib/theme/` – App theme and styling
+- `lib/services/` - Bluetooth transport and command sending
+- `lib/viewmodels/` - Provider-based Bluetooth state management
+- `lib/views/` - Connection and control screens
+- `lib/widgets/` - Press-sensitive control buttons
+- `lib/theme/` - App colors and Material theme
+- `test/` - ViewModel and widget tests
 
 ## Dependencies
 
-- `flutter_bluetooth_serial` – Bluetooth communication
-- `permission_handler` – Runtime permissions
-- `provider` – State management
-- `google_fonts` – Poppins font
+- `flutter_bluetooth_serial` - Classic Bluetooth serial communication
+- `permission_handler` - Runtime permission requests
+- `provider` - State management
+- `google_fonts` - App typography
