@@ -22,6 +22,11 @@ subprojects {
                 namespace = "io.github.edufolly.flutterbluetoothserial"
             }
         }
+        afterEvaluate {
+            extensions.configure<com.android.build.gradle.LibraryExtension> {
+                compileSdk = 36
+            }
+        }
     }
 }
 subprojects {
