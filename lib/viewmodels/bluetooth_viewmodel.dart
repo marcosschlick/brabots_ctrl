@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ class BluetoothViewModel extends ChangeNotifier {
   List<BluetoothDevice> _devices = [];
   String _errorMessage = '';
   bool _disposed = false;
+  final LinkedHashMap<String, String> _activeControls = LinkedHashMap();
 
   bool get isBluetoothOn => _isBluetoothOn;
   bool get isConnected => _isConnected;
@@ -68,6 +70,7 @@ class BluetoothViewModel extends ChangeNotifier {
   Future<bool> connectToDevice(BluetoothDevice device) async {
     if (_isConnecting) return false;
 
+    _activeControls.clear();
     _selectedDeviceAddress = device.address;
     _isConnecting = true;
     _errorMessage = '';
@@ -98,6 +101,7 @@ class BluetoothViewModel extends ChangeNotifier {
   }
 
   Future<void> disconnect() async {
+    _activeControls.clear();
     await _service.disconnect();
     _isConnected = false;
     _connectedDeviceName = null;
@@ -107,6 +111,7 @@ class BluetoothViewModel extends ChangeNotifier {
 
   Future<bool> sendCommand(String command) async {
     if (!_isConnected || !_service.isConnected) {
+      _activeControls.clear();
       _errorMessage = 'Sem conexão ativa';
       _isConnected = false;
       _connectedDeviceName = null;
@@ -121,7 +126,28 @@ class BluetoothViewModel extends ChangeNotifier {
     return success;
   }
 
+  void pressControl(String controlId, String command) {
+    _activeControls.remove(controlId);
+    _activeControls[controlId] = command;
+    unawaited(sendCommand(command));
+  }
+
+  void releaseControl(String controlId) {
+    final previousCommand = _activeControls.isEmpty
+        ? null
+        : _activeControls.values.last;
+    if (_activeControls.remove(controlId) == null) return;
+
+    final activeCommand = _activeControls.isEmpty
+        ? 'S'
+        : _activeControls.values.last;
+    if (activeCommand != previousCommand) {
+      unawaited(sendCommand(activeCommand));
+    }
+  }
+
   void _handleConnectionLost(String message) {
+    _activeControls.clear();
     _isConnected = false;
     _isConnecting = false;
     _connectedDeviceName = null;

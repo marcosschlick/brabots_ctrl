@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:ctrl/theme/app_theme.dart';
 import 'package:flutter/material.dart';
@@ -15,9 +16,7 @@ class ControlScreen extends StatefulWidget {
 }
 
 class _ControlScreenState extends State<ControlScreen> {
-  static const double _buttonSize = 70.0;
-  static const double _gapV = 1.0;
-  static const double _gapH = _gapV * 50.0;
+  BluetoothViewModel? _viewModel;
 
   static void _lockLandscape() {
     SystemChrome.setPreferredOrientations([
@@ -29,7 +28,6 @@ class _ControlScreenState extends State<ControlScreen> {
   @override
   void initState() {
     super.initState();
-
     _lockLandscape();
     WidgetsBinding.instance.addPostFrameCallback((_) => _lockLandscape());
   }
@@ -37,20 +35,23 @@ class _ControlScreenState extends State<ControlScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _viewModel ??= context.read<BluetoothViewModel>();
     _lockLandscape();
   }
 
   @override
   void dispose() {
     SystemChrome.setPreferredOrientations(DeviceOrientation.values);
-    final vm = context.read<BluetoothViewModel>();
-    if (vm.isConnected) {
-      unawaited(vm.disconnect());
+    final viewModel = _viewModel;
+    if (viewModel?.isConnected ?? false) {
+      unawaited(viewModel!.disconnect());
     }
     super.dispose();
   }
 
   Widget _cross({
+    required double horizontalGap,
+    required double verticalGap,
     required Widget top,
     required Widget left,
     required Widget right,
@@ -61,32 +62,36 @@ class _ControlScreenState extends State<ControlScreen> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         top,
-        SizedBox(height: _gapV),
+        SizedBox(height: verticalGap),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             left,
-            SizedBox(width: _gapH),
+            SizedBox(width: horizontalGap),
             right,
           ],
         ),
-        SizedBox(height: _gapV),
+        SizedBox(height: verticalGap),
         bottom,
       ],
     );
   }
 
-  Widget _card(Widget content) {
+  Widget _card(Widget content, double buttonSize) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: EdgeInsets.symmetric(
+        horizontal: buttonSize * 0.22,
+        vertical: buttonSize * 0.19,
+      ),
       decoration: BoxDecoration(
-        color: AppTheme.deviceCardGreen,
+        color: AppTheme.surface,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
+        border: Border.all(color: const Color(0xFFE3EAF1)),
+        boxShadow: const [
           BoxShadow(
-            color: AppTheme.deviceCardGreen.withValues(alpha: 0.35),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Color(0x0D18324D),
+            blurRadius: 20,
+            offset: Offset(0, 7),
           ),
         ],
       ),
@@ -94,63 +99,107 @@ class _ControlScreenState extends State<ControlScreen> {
     );
   }
 
-  Widget _arrowBtn(IconData icon, String cmd, BluetoothViewModel vm) {
-    return SizedBox(
-      width: _buttonSize,
-      height: _buttonSize,
-      child: DirectionButton(
-        icon: icon,
-        onPressed: () => vm.sendCommand(cmd),
-        onReleased: () => vm.sendCommand('S'),
-      ),
+  Widget _arrowBtn(
+    IconData icon,
+    String controlId,
+    String command,
+    BluetoothViewModel vm,
+    double size,
+  ) {
+    return DirectionButton(
+      size: size,
+      icon: icon,
+      onPressed: () => vm.pressControl(controlId, command),
+      onReleased: () => vm.releaseControl(controlId),
     );
   }
 
-  Widget _faceBtn(String label, String cmd, BluetoothViewModel vm) {
+  Widget _faceBtn(
+    String label,
+    String command,
+    BluetoothViewModel vm,
+    double size,
+  ) {
     return DirectionButton(
-      onPressed: () => vm.sendCommand(cmd),
-      onReleased: () => vm.sendCommand('S'),
+      size: size,
+      onPressed: () => vm.pressControl(label, command),
+      onReleased: () => vm.releaseControl(label),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          fontSize: size * 0.31,
         ),
       ),
     );
   }
 
-  Widget _leftCard(BluetoothViewModel vm) => _card(
+  Widget _leftCard(
+    BluetoothViewModel vm,
+    double buttonSize,
+    double horizontalGap,
+    double verticalGap,
+  ) => _card(
     _cross(
-      top: _arrowBtn(Icons.arrow_upward, 'F', vm),
-      left: _arrowBtn(Icons.arrow_back, 'L', vm),
-      right: _arrowBtn(Icons.arrow_forward, 'R', vm),
-      bottom: _arrowBtn(Icons.arrow_downward, 'B', vm),
+      horizontalGap: horizontalGap,
+      verticalGap: verticalGap,
+      top: _arrowBtn(Icons.arrow_upward_rounded, 'up', 'F', vm, buttonSize),
+      left: _arrowBtn(Icons.arrow_back_rounded, 'left', 'L', vm, buttonSize),
+      right: _arrowBtn(
+        Icons.arrow_forward_rounded,
+        'right',
+        'R',
+        vm,
+        buttonSize,
+      ),
+      bottom: _arrowBtn(
+        Icons.arrow_downward_rounded,
+        'down',
+        'B',
+        vm,
+        buttonSize,
+      ),
     ),
+    buttonSize,
   );
 
-  Widget _rightCard(BluetoothViewModel vm) => _card(
+  Widget _rightCard(
+    BluetoothViewModel vm,
+    double buttonSize,
+    double horizontalGap,
+    double verticalGap,
+  ) => _card(
     _cross(
-      top: _faceBtn('X', 'X', vm),
-      left: _faceBtn('Y', 'Y', vm),
-      right: _faceBtn('A', 'A', vm),
-      bottom: _faceBtn('B', 'C', vm),
+      horizontalGap: horizontalGap,
+      verticalGap: verticalGap,
+      top: _faceBtn('X', 'X', vm, buttonSize),
+      left: _faceBtn('Y', 'Y', vm, buttonSize),
+      right: _faceBtn('A', 'A', vm, buttonSize),
+      bottom: _faceBtn('B', 'C', vm, buttonSize),
     ),
+    buttonSize,
   );
 
-  Widget _logo(BluetoothViewModel vm) => Column(
+  Widget _logo(BluetoothViewModel vm, double size) => Column(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Image.asset('assets/images/logo.png', height: 250),
-      const SizedBox(height: 10),
+      Image.asset(
+        'assets/images/logo.png',
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+      ),
+      const SizedBox(height: 8),
       Text(
-        'Conectado a:\n${vm.connectedDeviceName}',
+        vm.connectedDeviceName ?? 'Conectado',
         textAlign: TextAlign.center,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
         style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 13,
-          color: Colors.black87,
+          color: AppTheme.secondaryText,
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
         ),
       ),
     ],
@@ -170,21 +219,60 @@ class _ControlScreenState extends State<ControlScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackground,
-      appBar: AppBar(title: const Text('🎮 BRABOTS ctrl 🕹️')),
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+      appBar: AppBar(
+        title: const Text('BRABOTS ctrl'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 18),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                _leftCard(vm),
-                Flexible(child: Center(child: _logo(vm))),
-                _rightCard(vm),
+                const Icon(Icons.circle, color: AppTheme.brandGreen, size: 9),
+                const SizedBox(width: 7),
+                SizedBox(
+                  width: 132,
+                  child: Text(
+                    vm.connectedDeviceName ?? 'Conectado',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppTheme.secondaryText,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
+        ],
+      ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final widthLimit = (constraints.maxWidth - 188) / 7;
+            final heightLimit = (constraints.maxHeight - 48) / 3.6;
+            final buttonSize = math
+                .min(80.0, math.min(widthLimit, heightLimit))
+                .clamp(46.0, 80.0)
+                .toDouble();
+            final horizontalGap = buttonSize * 0.48;
+            final verticalGap = buttonSize * 0.11;
+            final logoSize = math.min(110.0, buttonSize * 1.7);
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _leftCard(vm, buttonSize, horizontalGap, verticalGap),
+                  Flexible(child: Center(child: _logo(vm, logoSize))),
+                  _rightCard(vm, buttonSize, horizontalGap, verticalGap),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

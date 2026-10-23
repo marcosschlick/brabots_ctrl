@@ -30,5 +30,6 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/images/logo.png"
-  adaptive_icon_background: "#000000"
-  adaptive_icon_foreground: "assets/images/logo.png"
+  image_path_android: "assets/icons/brabots_ctrl_icon.png"
+  adaptive_icon_background: "#123F78"
+  adaptive_icon_foreground: "assets/icons/brabots_ctrl_foreground.png"

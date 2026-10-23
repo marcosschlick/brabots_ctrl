@@ -178,4 +178,60 @@ void main() {
 
     viewModel.dispose();
   });
+
+  test(
+    'resumes the remaining control when the latest control is released',
+    () async {
+      final transport = FakeBluetoothTransport();
+      final viewModel = BluetoothViewModel(service: transport);
+
+      await viewModel.connectToDevice(device);
+
+      viewModel.pressControl('up', 'F');
+      viewModel.pressControl('right', 'R');
+      viewModel.releaseControl('right');
+      viewModel.releaseControl('up');
+
+      expect(transport.sentCommands, ['F', 'R', 'F', 'S']);
+
+      viewModel.dispose();
+    },
+  );
+
+  test('does not stop while another control remains active', () async {
+    final transport = FakeBluetoothTransport();
+    final viewModel = BluetoothViewModel(service: transport);
+
+    await viewModel.connectToDevice(device);
+
+    viewModel.pressControl('up', 'F');
+    viewModel.pressControl('right', 'R');
+    viewModel.releaseControl('up');
+
+    expect(transport.sentCommands, ['F', 'R']);
+
+    viewModel.releaseControl('right');
+
+    expect(transport.sentCommands, ['F', 'R', 'S']);
+
+    viewModel.dispose();
+  });
+
+  test('retains the most recent command among three active controls', () async {
+    final transport = FakeBluetoothTransport();
+    final viewModel = BluetoothViewModel(service: transport);
+
+    await viewModel.connectToDevice(device);
+
+    viewModel.pressControl('up', 'F');
+    viewModel.pressControl('right', 'R');
+    viewModel.pressControl('action', 'A');
+    viewModel.releaseControl('right');
+    viewModel.releaseControl('action');
+    viewModel.releaseControl('up');
+
+    expect(transport.sentCommands, ['F', 'R', 'A', 'F', 'S']);
+
+    viewModel.dispose();
+  });
 }

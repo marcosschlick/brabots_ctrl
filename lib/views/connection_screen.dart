@@ -7,61 +7,285 @@ import '../viewmodels/bluetooth_viewmodel.dart';
 class ConnectionScreen extends StatelessWidget {
   const ConnectionScreen({super.key});
 
-  Widget _buildStatusCard(BluetoothViewModel viewModel) {
-    final isBluetoothOn = viewModel.isBluetoothOn;
+  Widget _buildStatusCard(BuildContext context, BluetoothViewModel viewModel) {
     final isConnecting = viewModel.isConnecting;
     final hasError = viewModel.errorMessage.isNotEmpty;
+    final isBluetoothOn = viewModel.isBluetoothOn;
+    final color = hasError
+        ? const Color(0xFFB42318)
+        : isBluetoothOn || isConnecting
+        ? AppTheme.brandGreen
+        : AppTheme.secondaryText;
+    final icon = isConnecting
+        ? Icons.bluetooth_searching
+        : hasError
+        ? Icons.error_outline
+        : isBluetoothOn
+        ? Icons.bluetooth_connected
+        : Icons.bluetooth_disabled;
+    final text = isConnecting
+        ? 'Conectando…'
+        : hasError
+        ? viewModel.errorMessage
+        : isBluetoothOn
+        ? 'Bluetooth ligado'
+        : 'Bluetooth desligado';
 
-    Color backgroundColor;
-    IconData leadingIcon;
-    String statusText;
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
 
-    if (isConnecting) {
-      backgroundColor = const Color.fromARGB(255, 48, 38, 129);
-      leadingIcon = Icons.bluetooth_searching;
-      statusText = 'Conectando...';
-    } else if (hasError) {
-      backgroundColor = Colors.red.shade700;
-      leadingIcon = Icons.error_outline;
-      statusText = viewModel.errorMessage;
-    } else if (isBluetoothOn) {
-      backgroundColor = AppTheme.deviceCardGreen;
-      leadingIcon = Icons.bluetooth_connected;
-      statusText = 'Bluetooth ligado';
-    } else {
-      backgroundColor = Colors.grey.shade800;
-      leadingIcon = Icons.bluetooth_disabled;
-      statusText = 'Bluetooth desligado';
-    }
+    return AnimatedSwitcher(
+      duration: reduceMotion
+          ? Duration.zero
+          : const Duration(milliseconds: 180),
+      reverseDuration: reduceMotion
+          ? Duration.zero
+          : const Duration(milliseconds: 180),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeOutCubic,
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.08),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        ),
+      ),
+      child: Container(
+        key: ValueKey(text),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.deviceDividerColor),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 9),
+            Flexible(
+              child: Text(
+                text,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+  Widget _buildBrandSection(
+    BuildContext context,
+    BluetoothViewModel viewModel, {
+    required bool isWide,
+  }) {
+    final logoSize = isWide ? 92.0 : 104.0;
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 420),
+      child: Row(
+        children: [
+          Image.asset(
+            'assets/images/logo.png',
+            width: logoSize,
+            height: logoSize,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Controle Arduino',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: AppTheme.primaryText,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _buildStatusCard(context, viewModel),
+              ],
+            ),
           ),
         ],
       ),
-      child: Row(
+    );
+  }
+
+  Widget _buildDeviceCard(BuildContext context, BluetoothViewModel viewModel) {
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(maxWidth: 600),
+      decoration: AppTheme.deviceCardDecoration,
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
+      child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(leadingIcon, color: Colors.white, size: 22),
-          const SizedBox(width: 10),
-          Flexible(
-            child: Text(
-              statusText,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
+          const Text(
+            'Dispositivos pareados',
+            style: TextStyle(
+              color: AppTheme.primaryText,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
             ),
           ),
+          const SizedBox(height: 3),
+          const Text(
+            'Selecione o módulo Bluetooth do robô',
+            style: TextStyle(color: AppTheme.secondaryText, fontSize: 13),
+          ),
+          const SizedBox(height: 14),
+          if (viewModel.devices.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceTint,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Column(
+                children: [
+                  Icon(
+                    Icons.bluetooth_searching,
+                    color: AppTheme.brandBlue,
+                    size: 28,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Nenhum dispositivo pareado',
+                    style: TextStyle(
+                      color: AppTheme.primaryText,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Pareie o HC-05 ou HC-06 nas configurações Bluetooth do Android.',
+                    style: TextStyle(
+                      color: AppTheme.secondaryText,
+                      fontSize: 12,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: viewModel.devices.length,
+              separatorBuilder: (_, _) => const Divider(
+                color: AppTheme.deviceDividerColor,
+                height: 1,
+                indent: 12,
+                endIndent: 12,
+              ),
+              itemBuilder: (context, index) {
+                final device = viewModel.devices[index];
+                final isSelected =
+                    device.address == viewModel.selectedDeviceAddress;
+                final isConnecting = viewModel.isConnecting && isSelected;
+
+                return AnimatedContainer(
+                  duration: reduceMotion
+                      ? Duration.zero
+                      : const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? const Color(0xFFE9F2FC)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected
+                          ? AppTheme.brandBlue.withValues(alpha: 0.28)
+                          : Colors.transparent,
+                    ),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(16),
+                    clipBehavior: Clip.antiAlias,
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                      ),
+                      leading: Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppTheme.brandBlue
+                              : AppTheme.surfaceTint,
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                        child: Icon(
+                          Icons.bluetooth,
+                          color: isSelected ? Colors.white : AppTheme.brandBlue,
+                          size: 21,
+                        ),
+                      ),
+                      title: Text(
+                        device.name ?? 'Sem nome',
+                        style: const TextStyle(
+                          color: AppTheme.primaryText,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      subtitle: Text(
+                        device.address,
+                        style: const TextStyle(
+                          color: AppTheme.secondaryText,
+                          fontSize: 12,
+                        ),
+                      ),
+                      trailing: isConnecting
+                          ? const SizedBox.square(
+                              dimension: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(
+                              Icons.chevron_right,
+                              color: AppTheme.secondaryText,
+                            ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      onTap: viewModel.isConnected || viewModel.isConnecting
+                          ? null
+                          : () async {
+                              final connected = await viewModel.connectToDevice(
+                                device,
+                              );
+                              if (connected && context.mounted) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const ControlScreen(),
+                                  ),
+                                );
+                              }
+                            },
+                    ),
+                  ),
+                );
+              },
+            ),
         ],
       ),
     );
@@ -74,153 +298,35 @@ class ConnectionScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackground,
       appBar: AppBar(
-        title: const Text('🎮 BRABOTS ctrl 🕹️'),
+        title: const Text('BRABOTS ctrl'),
         actions: [
           IconButton(
+            tooltip: 'Atualizar dispositivos',
             icon: const Icon(Icons.refresh),
             onPressed: () => context.read<BluetoothViewModel>().refresh(),
           ),
+          const SizedBox(width: 6),
         ],
       ),
       body: SafeArea(
-        child: OrientationBuilder(
-          builder: (context, orientation) {
-            final isLandscape = orientation == Orientation.landscape;
-
-            Widget logoSection = Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset(
-                  'assets/images/logo.png',
-                  height: isLandscape ? 200 : 250,
-                ),
-                const SizedBox(height: 12),
-                _buildStatusCard(viewModel),
-              ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 760;
+            final brandSection = _buildBrandSection(
+              context,
+              viewModel,
+              isWide: isWide,
             );
+            final deviceCard = _buildDeviceCard(context, viewModel);
 
-            Widget deviceCard = Container(
-              width: double.infinity,
-              constraints: const BoxConstraints(maxWidth: 560),
-              decoration: AppTheme.deviceCardDecoration,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Dispositivos pareados:',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  viewModel.devices.isEmpty
-                      ? const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Text(
-                            'Nenhum dispositivo pareado',
-                            style: TextStyle(color: Colors.white70),
-                          ),
-                        )
-                      : ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: viewModel.devices.length,
-                          separatorBuilder: (_, _) => Divider(
-                            color: AppTheme.deviceDividerColor,
-                            height: 1,
-                            indent: 16,
-                            endIndent: 16,
-                          ),
-                          itemBuilder: (_, i) {
-                            final device = viewModel.devices[i];
-                            final isSelected =
-                                device.address ==
-                                viewModel.selectedDeviceAddress;
-
-                            return Container(
-                              margin: const EdgeInsets.symmetric(
-                                vertical: 4,
-                                horizontal: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? Color.fromARGB(255, 48, 38, 129)
-                                    : null,
-                                borderRadius: BorderRadius.circular(16),
-                                border: isSelected
-                                    ? Border.all(
-                                        color: const Color.fromARGB(
-                                          255,
-                                          255,
-                                          255,
-                                          255,
-                                        ),
-                                        width: 3,
-                                      )
-                                    : null,
-                              ),
-                              child: ListTile(
-                                leading: const Icon(
-                                  Icons.bluetooth,
-                                  color: Colors.white,
-                                ),
-                                title: Text(
-                                  device.name ?? 'Sem nome',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  device.address,
-                                  style: const TextStyle(color: Colors.white70),
-                                ),
-                                tileColor: isSelected
-                                    ? Colors.yellow.withValues(alpha: 0.2)
-                                    : null,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                onTap:
-                                    viewModel.isConnected ||
-                                        viewModel.isConnecting
-                                    ? null
-                                    : () async {
-                                        final connected = await viewModel
-                                            .connectToDevice(device);
-                                        if (connected && context.mounted) {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const ControlScreen(),
-                                            ),
-                                          );
-                                        }
-                                      },
-                              ),
-                            );
-                          },
-                        ),
-                ],
-              ),
-            );
-
-            if (!isLandscape) {
+            if (!isWide) {
               return SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 16,
-                ),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
                 child: Column(
                   children: [
-                    logoSection,
-                    const SizedBox(height: 24),
+                    brandSection,
+                    const SizedBox(height: 22),
                     deviceCard,
-                    const SizedBox(height: 24),
                   ],
                 ),
               );
@@ -233,17 +339,14 @@ class ConnectionScreen extends StatelessWidget {
                   flex: 4,
                   child: Center(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      child: logoSection,
+                      padding: const EdgeInsets.all(18),
+                      child: brandSection,
                     ),
                   ),
                 ),
                 const VerticalDivider(
                   width: 1,
-                  color: Colors.black12,
+                  color: AppTheme.deviceDividerColor,
                   indent: 24,
                   endIndent: 24,
                 ),
@@ -251,8 +354,8 @@ class ConnectionScreen extends StatelessWidget {
                   flex: 6,
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+                      horizontal: 20,
+                      vertical: 18,
                     ),
                     child: deviceCard,
                   ),

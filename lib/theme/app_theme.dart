@@ -2,47 +2,50 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  static const Color backgroundYellow = Color.fromARGB(255, 252, 217, 80);
-  static const Color deviceCardGreen = Color.fromARGB(255, 0, 148, 64);
-  static const Color appBarBackground = Colors.black;
-  static const Color controlButton = Colors.deepPurple;
+  static const Color background = Color(0xFFF3F6FA);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color surfaceTint = Color(0xFFEAF0F7);
+  static const Color brandBlue = Color(0xFF123F78);
+  static const Color brandGreen = Color(0xFF00884A);
+  static const Color primaryText = Color(0xFF162B45);
+  static const Color secondaryText = Color(0xFF63748A);
 
-  static final darkTheme = ThemeData(
+  static final theme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    scaffoldBackgroundColor: backgroundYellow,
+    scaffoldBackgroundColor: background,
     fontFamily: GoogleFonts.poppins().fontFamily,
     colorScheme: const ColorScheme.light(
-      primary: deviceCardGreen,
-      secondary: controlButton,
-      surface: backgroundYellow,
+      primary: brandBlue,
+      secondary: brandGreen,
+      surface: surface,
+      onSurface: primaryText,
     ),
     appBarTheme: AppBarTheme(
-      backgroundColor: appBarBackground,
-      foregroundColor: Colors.white,
-      centerTitle: true,
+      backgroundColor: surface,
+      foregroundColor: primaryText,
+      centerTitle: false,
+      elevation: 0,
+      scrolledUnderElevation: 0,
       titleTextStyle: GoogleFonts.poppins(
-        color: Colors.white,
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
+        color: primaryText,
+        fontSize: 19,
+        fontWeight: FontWeight.w700,
       ),
     ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        elevation: 8,
-        shadowColor: Colors.deepPurple.withValues(alpha: 0.6),
-        shape: const CircleBorder(),
-        padding: const EdgeInsets.all(20),
-      ),
-    ),
+    dividerColor: const Color(0xFFE4EAF1),
   );
 
-  static const Color scaffoldBackground = backgroundYellow;
+  static const Color scaffoldBackground = background;
 
   static BoxDecoration get deviceCardDecoration => BoxDecoration(
-    color: deviceCardGreen,
+    color: surface,
     borderRadius: BorderRadius.circular(24),
+    border: Border.all(color: const Color(0xFFE3EAF1)),
+    boxShadow: const [
+      BoxShadow(color: Color(0x0D18324D), blurRadius: 24, offset: Offset(0, 8)),
+    ],
   );
 
-  static Color get deviceDividerColor => Colors.white.withValues(alpha: 0.25);
+  static const Color deviceDividerColor = Color(0xFFE7EDF4);
 }

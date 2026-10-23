@@ -18,7 +18,7 @@ class MainApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'BRABOTS ctrl',
-        theme: AppTheme.darkTheme,
+        theme: AppTheme.theme,
         home: const ConnectionScreen(),
       ),
     );
