@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:io';
 import 'dart:typed_data';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -58,15 +60,17 @@ class BluetoothService implements BluetoothTransport {
   }
 
   Future<bool> _requestPermissions() async {
-    final statuses = await [
-      Permission.bluetoothScan,
-      Permission.bluetoothConnect,
-      Permission.locationWhenInUse,
-    ].request();
+    if (!Platform.isAndroid) return false;
 
-    return statuses[Permission.bluetoothScan]?.isGranted == true &&
-        statuses[Permission.bluetoothConnect]?.isGranted == true &&
-        statuses[Permission.locationWhenInUse]?.isGranted == true;
+    final androidInfo = await DeviceInfoPlugin().androidInfo;
+    final permissions = androidInfo.version.sdkInt >= 31
+        ? [Permission.bluetoothScan, Permission.bluetoothConnect]
+        : [Permission.locationWhenInUse];
+    final statuses = await permissions.request();
+
+    return permissions.every(
+      (permission) => statuses[permission]?.isGranted == true,
+    );
   }
 
   @override
