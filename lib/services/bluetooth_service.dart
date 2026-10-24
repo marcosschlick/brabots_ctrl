@@ -65,7 +65,10 @@ class BluetoothService implements BluetoothTransport {
     final androidInfo = await DeviceInfoPlugin().androidInfo;
     final permissions = <Permission>[
       Permission.locationWhenInUse,
-      if (androidInfo.version.sdkInt >= 31) Permission.bluetoothConnect,
+      if (androidInfo.version.sdkInt >= 31) ...[
+        Permission.bluetoothScan,
+        Permission.bluetoothConnect,
+      ],
     ];
     final statuses = await permissions.request();
 
