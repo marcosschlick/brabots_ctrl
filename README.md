@@ -1,8 +1,8 @@
 # BRABOTS ctrl
 
-Android Bluetooth controller for Arduino-powered robot cars, built with Flutter for the BRABOTS robotics competition.
+Flutter app for controlling Arduino-powered robot cars in the BRABOTS robotics competition.
 
-The app connects to a paired HC-05/HC-06 compatible Bluetooth module over classic Bluetooth SPP and sends one-character movement commands to the Arduino.
+Connect to a paired HC-05/HC-06 module over Bluetooth Classic SPP and send single-character commands to the Arduino. Use the demo screen to preview the controls without a Bluetooth connection.
 
 ## Features
 
@@ -12,7 +12,7 @@ The app connects to a paired HC-05/HC-06 compatible Bluetooth module over classi
 - Automatic stop command when a control is released or touch is canceled
 - Connection status, recoverable errors, and retry support
 - Landscape control screen for gamepad-style use
-- Unit and widget tests for Bluetooth state handling and button gestures
+- Control demo available from the connection screen; demo buttons do not send commands
 
 ## Requirements
 
@@ -50,7 +50,7 @@ if (Serial.available()) {
 
 ## Android Permissions
 
-The app requests Bluetooth scan/connect and location permissions. Location is still required by the current Bluetooth serial plugin and Android Bluetooth APIs to access paired devices on some Android versions.
+The app requests Bluetooth scan/connect and location permissions. The Bluetooth serial plugin may require location access to list paired devices on some Android versions.
 
 If no devices appear:
 
@@ -72,11 +72,10 @@ Build a debug APK:
 flutter build apk --debug
 ```
 
-Run checks:
+Check the code:
 
 ```bash
 flutter analyze
-flutter test
 ```
 
 ## Project Structure
@@ -86,7 +85,6 @@ flutter test
 - `lib/views/` - Connection and control screens
 - `lib/widgets/` - Press-sensitive control buttons
 - `lib/theme/` - App colors and Material theme
-- `test/` - ViewModel and widget tests
 
 ## Dependencies
 
