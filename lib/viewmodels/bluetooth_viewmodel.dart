@@ -45,9 +45,7 @@ class BluetoothViewModel extends ChangeNotifier {
     if (_isBluetoothOn) {
       await loadDevices();
     } else {
-      _devices = [];
-      _errorMessage = 'Bluetooth não disponível';
-      _safeNotifyListeners();
+      _setBluetoothUnavailable();
     }
   }
 
@@ -55,9 +53,7 @@ class BluetoothViewModel extends ChangeNotifier {
     if (!_isBluetoothOn) {
       _isBluetoothOn = await _service.enableBluetooth();
       if (!_isBluetoothOn) {
-        _devices = [];
-        _errorMessage = 'Bluetooth não disponível';
-        _safeNotifyListeners();
+        _setBluetoothUnavailable();
         return;
       }
     }
@@ -144,6 +140,12 @@ class BluetoothViewModel extends ChangeNotifier {
     if (activeCommand != previousCommand) {
       unawaited(sendCommand(activeCommand));
     }
+  }
+
+  void _setBluetoothUnavailable() {
+    _devices = [];
+    _errorMessage = 'Bluetooth não disponível';
+    _safeNotifyListeners();
   }
 
   void _handleConnectionLost(String message) {

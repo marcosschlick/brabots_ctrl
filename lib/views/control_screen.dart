@@ -9,7 +9,9 @@ import '../viewmodels/bluetooth_viewmodel.dart';
 import '../widgets/direction_button.dart';
 
 class ControlScreen extends StatefulWidget {
-  const ControlScreen({super.key});
+  const ControlScreen({super.key, this.isDemo = false});
+
+  final bool isDemo;
 
   @override
   State<ControlScreen> createState() => _ControlScreenState();
@@ -43,7 +45,7 @@ class _ControlScreenState extends State<ControlScreen> {
   void dispose() {
     SystemChrome.setPreferredOrientations(DeviceOrientation.values);
     final viewModel = _viewModel;
-    if (viewModel?.isConnected ?? false) {
+    if (!widget.isDemo && (viewModel?.isConnected ?? false)) {
       unawaited(viewModel!.disconnect());
     }
     super.dispose();
@@ -109,9 +111,21 @@ class _ControlScreenState extends State<ControlScreen> {
     return DirectionButton(
       size: size,
       icon: icon,
-      onPressed: () => vm.pressControl(controlId, command),
-      onReleased: () => vm.releaseControl(controlId),
+      onPressed: () => _pressControl(vm, controlId, command),
+      onReleased: () => _releaseControl(vm, controlId),
     );
+  }
+
+  void _pressControl(
+    BluetoothViewModel vm,
+    String controlId,
+    String command,
+  ) {
+    if (!widget.isDemo) vm.pressControl(controlId, command);
+  }
+
+  void _releaseControl(BluetoothViewModel vm, String controlId) {
+    if (!widget.isDemo) vm.releaseControl(controlId);
   }
 
   Widget _faceBtn(
@@ -122,8 +136,8 @@ class _ControlScreenState extends State<ControlScreen> {
   ) {
     return DirectionButton(
       size: size,
-      onPressed: () => vm.pressControl(label, command),
-      onReleased: () => vm.releaseControl(label),
+      onPressed: () => _pressControl(vm, label, command),
+      onReleased: () => _releaseControl(vm, label),
       child: Text(
         label,
         style: TextStyle(
@@ -209,7 +223,7 @@ class _ControlScreenState extends State<ControlScreen> {
   Widget build(BuildContext context) {
     final vm = context.watch<BluetoothViewModel>();
 
-    if (!vm.isConnected) {
+    if (!widget.isDemo && !vm.isConnected) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && Navigator.canPop(context)) {
           Navigator.pop(context);
@@ -218,7 +232,7 @@ class _ControlScreenState extends State<ControlScreen> {
     }
 
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBackground,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('BRABOTS ctrl'),
         actions: [
@@ -227,12 +241,20 @@ class _ControlScreenState extends State<ControlScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.circle, color: AppTheme.brandGreen, size: 9),
+                Icon(
+                  widget.isDemo ? Icons.visibility_outlined : Icons.circle,
+                  color: widget.isDemo
+                      ? AppTheme.brandBlue
+                      : AppTheme.brandGreen,
+                  size: widget.isDemo ? 16 : 9,
+                ),
                 const SizedBox(width: 7),
                 SizedBox(
                   width: 132,
                   child: Text(
-                    vm.connectedDeviceName ?? 'Conectado',
+                    widget.isDemo
+                        ? 'Demonstração'
+                        : vm.connectedDeviceName ?? 'Conectado',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -256,7 +278,7 @@ class _ControlScreenState extends State<ControlScreen> {
                 .min(80.0, math.min(widthLimit, heightLimit))
                 .clamp(46.0, 80.0)
                 .toDouble();
-            final horizontalGap = buttonSize * 0.48;
+            final horizontalGap = buttonSize * 0.96;
             final verticalGap = buttonSize * 0.11;
             final logoSize = math.min(110.0, buttonSize * 1.7);
 

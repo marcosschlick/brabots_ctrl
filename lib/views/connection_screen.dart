@@ -296,7 +296,7 @@ class ConnectionScreen extends StatelessWidget {
     final viewModel = context.watch<BluetoothViewModel>();
 
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBackground,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('BRABOTS ctrl'),
         actions: [
@@ -304,6 +304,31 @@ class ConnectionScreen extends StatelessWidget {
             tooltip: 'Atualizar dispositivos',
             icon: const Icon(Icons.refresh),
             onPressed: () => context.read<BluetoothViewModel>().refresh(),
+          ),
+          PopupMenuButton<String>(
+            tooltip: 'Mais opções',
+            onSelected: (value) {
+              if (value == 'demo') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ControlScreen(isDemo: true),
+                  ),
+                );
+              }
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: 'demo',
+                child: Row(
+                  children: [
+                    Icon(Icons.visibility_outlined, size: 18),
+                    SizedBox(width: 10),
+                    Text('Visualizar controles'),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(width: 6),
         ],

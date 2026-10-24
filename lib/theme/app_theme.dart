@@ -36,8 +36,6 @@ class AppTheme {
     dividerColor: const Color(0xFFE4EAF1),
   );
 
-  static const Color scaffoldBackground = background;
-
   static BoxDecoration get deviceCardDecoration => BoxDecoration(
     color: surface,
     borderRadius: BorderRadius.circular(24),
